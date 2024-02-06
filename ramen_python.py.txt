@@ -1,13 +1,12 @@
 # -- Date: 5/27/2022
-# -- About: This script has the various modules required for supporting Ramen reports and other Projects supported by FP SEI
-# -- Author: Satish P / Aruna M
+# -- About: This script has the various modules required for supporting Ramen reports
 # -- !Important!
 # Reusable modules:
 # - Email function + HTML Formatting
 # - Create Gsheet, Set Permissions and Extract to Gsheets
 # - Execute SQL against Bigquery
 
-# The meta data sheet for UI -> https://docs.google.com/spreadsheets/d/1ZnhP-VO1CpK3Cx4DJ9nfiAkunidM22pwiyJ_d1FstPc/edit#gid=94944375
+# The meta data sheet for UI -> https://docs.google.com/spreadsheets/d/{gsheet_Id}
 import sys
 
 from google.cloud import bigquery
