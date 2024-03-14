@@ -1,0 +1,75 @@
+import os
+import datetime
+from airflow import models
+from airflow.models import Variable
+from airflow.operators import python_operator
+from airflow.utils.dates import days_ago
+from openg_dataengineering.SEI.ramen_reports import sei_toolbox
+import json
+
+default_dag_args = {
+    'owner': 'SCDE_SEI',
+    'queue': "airflow_dsm1_highmem",
+    'email': ['apasricha@wayfair.com'],
+    'email_on_failure': True,
+    'email_on_retry': True,
+    'start_date': days_ago(1),
+    'retries': 100, #Pokes 100 times before it fails.
+    'retry_delay': datetime.timedelta(minutes=5) #Retries after every 5 minutes.
+}
+
+#Setting the json file path for the secrets.
+dr_var = Variable.get("OpsProdServiceAccount", deserialize_json=True)
+cred_path = dr_var['credential_json_file_prod']
+#Setting the default environment to json secrets.
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = cred_path
+
+projects = '{"projects":[' \
+               '{"project_id":"1","dag_id":"1","project_name":"ramen_report_demo"}'\
+           ']}'
+
+# Load JSON string into a dictionary
+projects_json = json.loads(projects)
+
+
+for projects in projects_json['projects']:
+    
+    with models.DAG(
+        dag_id=f"sei_ramen_reports_dag_1_{projects['project_name']}",
+        schedule_interval="0 11,15 * * *",
+        default_args=default_dag_args,
+        catchup = False,
+        max_active_runs = 1) as dag:
+
+
+
+        task_meta_validate = python_operator.PythonOperator(task_id=f"task_meta_validate_{projects['project_name']}",
+                                                           python_callable=sei_toolbox.ramen_report_meta_validate,
+                                                           retries=2,
+                                                           op_kwargs={'dag_id': projects['dag_id'],
+                                                                      'project_id': projects['project_id'],
+                                                                      'cred_path': cred_path},
+                                                           provide_context=True)
+        task_table_create = python_operator.PythonOperator(task_id=f"task_table_create_{projects['project_name']}",
+                                                python_callable=sei_toolbox.ramen_report_etl,
+                                                retries=2,
+                                                op_kwargs={'dag_id': projects['dag_id'], 'project_id':projects['project_id'], 'cred_path': cred_path},
+                                                provide_context=True)
+        task_form_create = python_operator.PythonOperator(task_id=f"task_form_create_{projects['project_name']}",
+                                                             python_callable=sei_toolbox.ramen_report_form_create,
+                                                             retries=2,
+                                                             op_kwargs={'dag_id': projects['dag_id'],
+                                                                        'project_id': projects['project_id'],
+                                                                        'cred_path': cred_path},
+                                                             provide_context=True)
+        task_gsheet_extract = python_operator.PythonOperator(task_id=f"task_gsheet_extract_{projects['project_name']}",
+                                                          python_callable=sei_toolbox.ramen_report_gsheet_extract,
+                                                          retries=2,
+                                                          op_kwargs={'dag_id':projects['dag_id'],'project_id':projects['project_id'],'cred_path': cred_path},
+                                                          provide_context=True)
+        task_email = python_operator.PythonOperator(task_id=f"task_email_{projects['project_name']}",
+                                                        python_callable=sei_toolbox.ramen_reports_send_email,
+                                                        retries=2,
+                                                        op_kwargs={'dag_id': projects['dag_id'],'project_id': projects['project_id'],'cred_path': cred_path},
+                                                        provide_context=True)
+        task_meta_validate >> task_form_create >> task_table_create >> task_gsheet_extract >> task_email
