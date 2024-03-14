@@ -19,10 +19,10 @@ default_dag_args = {
 }
 
 #Setting the json file path for the secrets.
-dr_var = Variable.get("OpsProdServiceAccount", deserialize_json=True)
-cred_path = dr_var['credential_json_file_prod']
+dr_var = Variable.get("XXXX", deserialize_json=True)
+cred_path = dr_var['XXXX']
 #Setting the default environment to json secrets.
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = cred_path
+os.environ["XXXX"] = cred_path
 
 projects = '{"projects":[' \
                '{"project_id":"1","dag_id":"1","project_name":"ramen_report_demo"}'\
