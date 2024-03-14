@@ -4,12 +4,12 @@ from airflow import models
 from airflow.models import Variable
 from airflow.operators import python_operator
 from airflow.utils.dates import days_ago
-from openg_dataengineering.SEI.ramen_reports import sei_toolbox
+import sei_toolbox
 import json
 
 default_dag_args = {
-    'owner': 'SCDE_SEI',
-    'queue': "airflow_dsm1_highmem",
+    'owner': 'Admins_Team',
+    'queue': "XXXX",
     'email': ['admin@email.com'],
     'email_on_failure': True,
     'email_on_retry': True,
