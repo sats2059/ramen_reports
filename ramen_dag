@@ -10,7 +10,7 @@ import json
 default_dag_args = {
     'owner': 'SCDE_SEI',
     'queue': "airflow_dsm1_highmem",
-    'email': ['apasricha@wayfair.com'],
+    'email': ['admin@email.com'],
     'email_on_failure': True,
     'email_on_retry': True,
     'start_date': days_ago(1),
